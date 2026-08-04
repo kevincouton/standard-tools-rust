@@ -7,3 +7,11 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+rust_decimal = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
