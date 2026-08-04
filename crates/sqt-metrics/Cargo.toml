@@ -8,3 +8,5 @@ license.workspace = true
 
 [dependencies]
 sqt-core = { path = "../sqt-core" }
+ndarray = { workspace = true }
+statrs = { workspace = true }
