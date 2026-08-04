@@ -1,0 +1,14 @@
+[tools]
+rust = "latest"
+podman = "latest"
+act = "0.2.75"
+
+[tasks]
+build = "cargo build --workspace"
+test = "cargo test --workspace"
+test-integration = "cargo test --workspace --test '*'-D warnings"
+clippy = "cargo clippy --workspace --all-targets -- -D warnings"
+fmt = "cargo fmt --all"
+db-up = "docker compose up -d postgres"
+migrate = "sqlx migrate run"
+run = "cargo run -p sqt-api"

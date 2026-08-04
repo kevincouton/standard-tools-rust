@@ -1,0 +1,50 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/sqt-core",
+    "crates/sqt-marketdata",
+    "crates/sqt-indicators",
+    "crates/sqt-metrics",
+    "crates/sqt-analysis",
+    "crates/sqt-backtest",
+    "crates/sqt-portfolio",
+    "crates/sqt-screener",
+    "crates/sqt-agent",
+    "crates/sqt-audit",
+    "crates/sqt-orders",
+    "crates/sqt-api",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+authors = ["Kevin Couton"]
+license = "MIT"
+
+[workspace.dependencies]
+tokio = { version = "1.40", features = ["full"] }
+axum = "0.7"
+tonic = "0.12"
+prost = "0.13"
+tower = "0.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.12", features = ["json"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "migrate", "uuid", "chrono"] }
+moka = { version = "0.12", features = ["future"] }
+ndarray = "0.16"
+ndarray-linalg = { version = "0.16", features = ["openblas"] }
+statrs = "0.18"
+nalgebra = "0.33"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.11", features = ["v4", "serde"] }
+thiserror = "2.0"
+anyhow = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+clap = { version = "4.5", features = ["derive"] }
+config = "0.14"
+tower-http = { version = "0.6", features = ["trace", "cors"] }
+rust_decimal = { version = "1.36", features = ["serde"] }
+async-trait = "0.1"
