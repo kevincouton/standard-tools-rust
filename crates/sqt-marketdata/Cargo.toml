@@ -8,3 +8,16 @@ license.workspace = true
 
 [dependencies]
 sqt-core = { path = "../sqt-core" }
+async-trait = { workspace = true }
+reqwest = { workspace = true }
+csv = { workspace = true }
+chrono = { workspace = true }
+rust_decimal = { workspace = true }
+moka = { workspace = true }
+dashmap = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+tokio-test = { workspace = true }
+wiremock = { workspace = true }

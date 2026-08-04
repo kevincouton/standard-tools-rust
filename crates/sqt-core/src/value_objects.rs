@@ -182,3 +182,13 @@ pub enum BarInterval {
     /// Monthly bars.
     Monthly,
 }
+
+impl std::fmt::Display for BarInterval {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BarInterval::Daily => write!(f, "1d"),
+            BarInterval::Weekly => write!(f, "1wk"),
+            BarInterval::Monthly => write!(f, "1mo"),
+        }
+    }
+}
