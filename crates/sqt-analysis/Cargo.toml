@@ -8,3 +8,13 @@ license.workspace = true
 
 [dependencies]
 sqt-core = { path = "../sqt-core" }
+ndarray = { workspace = true }
+ndarray-linalg = { workspace = true }
+statrs = { workspace = true }
+rust_decimal = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
