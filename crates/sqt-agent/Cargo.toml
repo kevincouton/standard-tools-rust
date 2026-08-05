@@ -8,3 +8,21 @@ license.workspace = true
 
 [dependencies]
 sqt-core = { path = "../sqt-core" }
+sqt-marketdata = { path = "../sqt-marketdata" }
+sqt-indicators = { path = "../sqt-indicators" }
+sqt-metrics = { path = "../sqt-metrics" }
+sqt-analysis = { path = "../sqt-analysis" }
+sqt-backtest = { path = "../sqt-backtest" }
+sqt-portfolio = { path = "../sqt-portfolio" }
+sqt-screener = { path = "../sqt-screener" }
+serde_json = { workspace = true }
+serde = { workspace = true }
+chrono = { workspace = true }
+rust_decimal = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+async-trait = { workspace = true }
