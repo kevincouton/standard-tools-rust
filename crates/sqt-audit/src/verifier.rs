@@ -8,13 +8,14 @@
 
 use std::sync::Arc;
 
+use serde::Serialize;
 use sqt_core::{QuantError, Result};
 
 use crate::hash::{compute_record_hash, GENESIS_HASH};
 use crate::storage::AuditStorage;
 
 /// Result of a chain verification.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum VerificationResult {
     /// The chain is intact.
     Ok,

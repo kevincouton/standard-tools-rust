@@ -25,6 +25,11 @@ impl<S: AuditStorage> AuditWriter<S> {
         Self { storage }
     }
 
+    /// Returns a clone of the underlying storage handle.
+    pub fn storage(&self) -> Arc<S> {
+        self.storage.clone()
+    }
+
     /// Records a tool execution.
     ///
     /// The record is linked to the previous record's hash (or the genesis hash

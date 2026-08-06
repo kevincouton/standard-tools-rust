@@ -6,5 +6,45 @@ rust-version.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[[bin]]
+name = "standard-tools"
+path = "src/main.rs"
+
 [dependencies]
 sqt-core = { path = "../sqt-core" }
+sqt-marketdata = { path = "../sqt-marketdata" }
+sqt-indicators = { path = "../sqt-indicators" }
+sqt-metrics = { path = "../sqt-metrics" }
+sqt-analysis = { path = "../sqt-analysis" }
+sqt-backtest = { path = "../sqt-backtest" }
+sqt-portfolio = { path = "../sqt-portfolio" }
+sqt-screener = { path = "../sqt-screener" }
+sqt-agent = { path = "../sqt-agent" }
+sqt-audit = { path = "../sqt-audit" }
+sqt-orders = { path = "../sqt-orders" }
+axum = { workspace = true }
+tonic = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+rust_decimal = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+clap = { workspace = true }
+config = { workspace = true }
+tokio = { workspace = true }
+sqlx = { workspace = true }
+async-trait = { workspace = true }
+prost = { workspace = true }
+
+[dev-dependencies]
+http-body-util = "0.1"
+
+[build-dependencies]
+tonic-build = "0.12"
+protoc-bin-vendored = "3.0"
