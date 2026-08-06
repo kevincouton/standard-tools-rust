@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: docker.io/postgres:16-alpine
+    environment:
+      POSTGRES_USER: standard_tools
+      POSTGRES_PASSWORD: standard_tools
+      POSTGRES_DB: standard_tools
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U standard_tools -d standard_tools"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  standard-tools:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      DATABASE_URL: postgres://standard_tools:standard_tools@postgres:5432/standard_tools
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

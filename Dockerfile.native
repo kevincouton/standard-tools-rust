@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+# Native-style build: produces a minimal distroless image with the compiled binary.
+FROM rust:1.82-slim-bookworm AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    protobuf-compiler \
+    libssl-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+COPY proto ./proto
+
+RUN cargo build --release -p sqt-api
+
+FROM gcr.io/distroless/cc-debian12:nonroot
+COPY --from=builder /app/target/release/standard-tools /usr/local/bin/standard-tools
+
+EXPOSE 8080 50051
+
+ENTRYPOINT ["/usr/local/bin/standard-tools"]
+CMD ["server"]

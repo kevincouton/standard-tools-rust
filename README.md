@@ -19,6 +19,34 @@ mise run build
 mise run test
 ```
 
+Open `test-report.html` after running tests for a visual summary.
+
+## Docker
+
+```bash
+# Classic Debian-based image
+mise run image
+
+# Minimal native-style image
+mise run image-native
+
+# Compose with PostgreSQL
+docker compose up -d
+```
+
+## Local CI with act + Podman
+
+```bash
+mise run act
+```
+
+## Protocol Endpoints
+
+- REST: `/api/v1/*`
+- gRPC: `standard_tools.health` / `standard_tools.agent`
+- A2A: `/a2a/tasks/{send,get,cancel}`
+- MCP: `/mcp/tools/{list,call}`
+
 ## Crates
 
 | Crate | Purpose |
