@@ -99,7 +99,9 @@ pub fn optimize(returns_matrix: &[Vec<f64>], labels: &[String]) -> Result<RiskPa
         weights_map.insert(label.clone(), weights[i]);
     }
 
-    Ok(RiskParityResult { weights: weights_map })
+    Ok(RiskParityResult {
+        weights: weights_map,
+    })
 }
 
 fn validate(returns_matrix: &[Vec<f64>], labels: &[String]) -> Result<()> {
