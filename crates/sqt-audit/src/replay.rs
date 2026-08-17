@@ -13,6 +13,10 @@ use serde_json::Value;
 use crate::hash::hash_payload;
 use crate::storage::AuditStorage;
 
+/// Tools that should not be replayed because they consume external quota or
+/// can trigger side effects (e.g. repeating an order or an audit replay loop).
+const SIDE_EFFECTING_TOOLS: &[&str] = &["fetch_ohlcv", "fetch_multiple_ohlcv", "audit_replay"];
+
 /// Dispatch interface supplied by the caller.
 ///
 /// Implementors receive the original tool name and input and must return the
@@ -52,6 +56,11 @@ impl<S: AuditStorage> AuditReplayer<S> {
 
         for record in &records {
             total += 1;
+
+            if SIDE_EFFECTING_TOOLS.contains(&record.tool_name.as_str()) {
+                errors += 1;
+                continue;
+            }
 
             match dispatcher.dispatch(&record.tool_name, &record.input).await {
                 Ok(output) => {

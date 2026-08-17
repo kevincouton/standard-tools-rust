@@ -12,6 +12,8 @@ use crate::port::MarketDataCache;
 /// Default TTL for cached series.
 pub const DEFAULT_TTL: Duration = Duration::from_secs(5 * 60);
 
+pub const DEFAULT_MAX_CAPACITY: u64 = 10_000;
+
 /// A [`MarketDataCache`] implementation backed by [`moka::future::Cache`].
 ///
 /// Entries are stored with a configurable time-to-live. After the TTL expires,
@@ -22,15 +24,24 @@ pub struct MokaMarketDataCache {
 }
 
 impl MokaMarketDataCache {
-    /// Creates a new cache with the default TTL ([`DEFAULT_TTL`]).
+    /// Creates a new cache with the default TTL ([`DEFAULT_TTL`]) and default
+    /// max capacity ([`DEFAULT_MAX_CAPACITY`]).
     pub fn new() -> Self {
-        Self::with_ttl(DEFAULT_TTL)
+        Self::with_ttl_and_capacity(DEFAULT_TTL, DEFAULT_MAX_CAPACITY)
     }
 
-    /// Creates a new cache with the given `ttl`.
+    /// Creates a new cache with the given `ttl` and default max capacity.
     pub fn with_ttl(ttl: Duration) -> Self {
+        Self::with_ttl_and_capacity(ttl, DEFAULT_MAX_CAPACITY)
+    }
+
+    /// Creates a new cache with the given `ttl` and `max_capacity`.
+    pub fn with_ttl_and_capacity(ttl: Duration, max_capacity: u64) -> Self {
         Self {
-            inner: MokaCache::builder().time_to_live(ttl).build(),
+            inner: MokaCache::builder()
+                .max_capacity(max_capacity)
+                .time_to_live(ttl)
+                .build(),
         }
     }
 }

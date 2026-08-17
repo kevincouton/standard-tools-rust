@@ -60,6 +60,11 @@ pub struct WalkForwardResult {
     pub selected_params: Vec<(NaiveDate, HashMap<String, String>)>,
 }
 
+/// Maximum train/test window sizes and parameter-grid combinations to prevent
+/// runaway walk-forward optimization.
+pub const MAX_WALK_FORWARD_WINDOW: usize = 10_000;
+pub const MAX_WALK_FORWARD_COMBINATIONS: usize = 10_000;
+
 /// Walk-forward optimizer.
 #[derive(Debug, Clone)]
 pub struct WalkForwardOptimizer {
@@ -76,6 +81,19 @@ impl WalkForwardOptimizer {
     /// Splits `series` into in-sample / out-of-sample windows, optimises
     /// parameters in-sample, and returns the combined out-of-sample result.
     pub fn run(&self, series: &[Ohlcv]) -> Result<WalkForwardResult> {
+        if self.config.train_size == 0 || self.config.test_size == 0 {
+            return Err(QuantError::InvalidCommand(
+                "train_size and test_size must be greater than 0".to_string(),
+            ));
+        }
+        if self.config.train_size > MAX_WALK_FORWARD_WINDOW
+            || self.config.test_size > MAX_WALK_FORWARD_WINDOW
+        {
+            return Err(QuantError::InvalidCommand(format!(
+                "train_size and test_size must be <= {MAX_WALK_FORWARD_WINDOW}"
+            )));
+        }
+
         if series.len() < self.config.train_size + self.config.test_size {
             return Err(QuantError::InvalidCommand(
                 "series is too short for walk-forward configuration".to_string(),
@@ -87,6 +105,13 @@ impl WalkForwardOptimizer {
             return Err(QuantError::InvalidCommand(
                 "walk-forward requires a non-empty parameter grid".to_string(),
             ));
+        }
+        if combinations.len() > MAX_WALK_FORWARD_COMBINATIONS {
+            return Err(QuantError::InvalidCommand(format!(
+                "parameter grid produces {} combinations; maximum is {}",
+                combinations.len(),
+                MAX_WALK_FORWARD_COMBINATIONS
+            )));
         }
 
         let mut test_results: Vec<BacktestResult> = Vec::new();

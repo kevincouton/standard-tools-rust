@@ -33,7 +33,7 @@ pub fn router<S: AuditStorage + 'static>(state: Arc<AppState<S>>) -> Router {
             "/api/v1/indicators/:indicator",
             post(compute_indicator::<S>),
         )
-        .route("/api/v1/metrics/:metric", get(compute_metric::<S>))
+        .route("/api/v1/metrics/:metric", post(compute_metric::<S>))
         .route("/api/v1/analysis/:method", post(run_analysis::<S>))
         .route("/api/v1/backtest/:strategy", post(run_backtest::<S>))
         .route(

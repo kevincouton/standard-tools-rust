@@ -68,6 +68,9 @@ pub struct BacktestEngine {
     config: BacktestConfig,
 }
 
+/// Maximum number of price bars a single backtest will process.
+pub const MAX_BACKTEST_BARS: usize = 50_000;
+
 impl BacktestEngine {
     /// Creates a new backtest engine for the supplied strategy and configuration.
     pub fn new(strategy: Arc<dyn Strategy>, config: BacktestConfig) -> Self {
@@ -87,6 +90,11 @@ impl BacktestEngine {
             return Err(QuantError::InvalidCommand(
                 "backtest requires a non-empty price series".to_string(),
             ));
+        }
+        if series.len() > MAX_BACKTEST_BARS {
+            return Err(QuantError::InvalidCommand(format!(
+                "backtest series exceeds maximum of {MAX_BACKTEST_BARS} bars"
+            )));
         }
 
         let signals = self.strategy.signals(series, params)?;

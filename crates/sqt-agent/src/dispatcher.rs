@@ -34,6 +34,8 @@ use crate::tool::{ToolCall, ToolResult};
 /// Upper bound on Monte Carlo paths to keep a single request from
 /// monopolising the process.
 const MAX_MONTE_CARLO_SIMULATIONS: usize = 10_000;
+const MAX_SCREEN_FILTERS: usize = 50;
+const MAX_SCREEN_TICKERS: usize = 100;
 
 /// Dispatches agent tool calls to domain services.
 ///
@@ -687,6 +689,11 @@ impl<P: FundamentalProvider> ToolDispatcher<P> {
 
     fn screen_fundamentals(&self, args: &Value) -> Result<ToolResult> {
         let filters = parse_fundamental_filters(args)?;
+        if filters.len() > MAX_SCREEN_FILTERS {
+            return Err(QuantError::InvalidCommand(format!(
+                "at most {MAX_SCREEN_FILTERS} screener filters are supported"
+            )));
+        }
         let results = self.screener.screen(&filters)?;
         Ok(ToolResult::ok(to_tool_value(results)?))
     }
@@ -694,11 +701,22 @@ impl<P: FundamentalProvider> ToolDispatcher<P> {
     async fn screen_with_indicators(&self, args: &Value) -> Result<ToolResult> {
         let filters = parse_fundamental_filters(args)?;
         let indicator_filters = parse_indicator_filters(args)?;
+        if filters.len() > MAX_SCREEN_FILTERS || indicator_filters.len() > MAX_SCREEN_FILTERS {
+            return Err(QuantError::InvalidCommand(format!(
+                "at most {MAX_SCREEN_FILTERS} screener filters are supported"
+            )));
+        }
         let range = parse_date_range(args)?;
         let interval = parse_interval(args)?;
         let provider = parse_provider(args);
 
         let fundamental_matches = self.screener.screen(&filters)?;
+        if fundamental_matches.len() > MAX_SCREEN_TICKERS {
+            return Err(QuantError::InvalidCommand(format!(
+                "screening returned {} tickers; maximum is {MAX_SCREEN_TICKERS}",
+                fundamental_matches.len()
+            )));
+        }
         let mut ohlcv_data: HashMap<String, Vec<Ohlcv>> = HashMap::new();
 
         for data in &fundamental_matches {

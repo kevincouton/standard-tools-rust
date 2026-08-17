@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use sqt_core::{QuantError, Result};
 use std::collections::HashMap;
 
-use crate::validation::check_unique_labels;
+use crate::validation::validate_labels;
 
 /// Small ridge added to the diagonal of the covariance matrix before inversion
 /// for numerical stability.
@@ -292,7 +292,7 @@ fn validate(
             labels.len()
         )));
     }
-    check_unique_labels(labels)?;
+    validate_labels(labels)?;
     if market_caps.len() != n {
         return Err(QuantError::InvalidCommand(format!(
             "expected {n} market caps, got {}",

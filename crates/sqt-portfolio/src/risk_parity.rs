@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use sqt_core::{QuantError, Result};
 use std::collections::HashMap;
 
-use crate::validation::check_unique_labels;
+use crate::validation::validate_labels;
 
 /// Threshold below which a denominator is treated as degenerate.
 const DEGENERACY_EPS: f64 = 1e-12;
@@ -80,7 +80,7 @@ fn validate(returns_matrix: &[Vec<f64>], labels: &[String]) -> Result<()> {
             labels.len()
         )));
     }
-    check_unique_labels(labels)?;
+    validate_labels(labels)?;
     let obs = returns_matrix[0].len();
     if obs < 2 {
         return Err(QuantError::DataQuality(
