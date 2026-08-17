@@ -5,7 +5,7 @@ act = "0.2.75"
 
 [tasks]
 build = "cargo build --workspace"
-test = "set -o pipefail; cargo test --workspace 2>&1 | tee test-output.log && ./scripts/visual-test-report.sh test-output.log test-report.html"
+test = "bash -c 'set -o pipefail; cargo test --workspace 2>&1 | tee test-output.log && ./scripts/visual-test-report.sh test-output.log test-report.html'"
 test-integration = "cargo test --workspace --all-targets"
 clippy = "cargo clippy --workspace --all-targets -- -D warnings"
 fmt = "cargo fmt --all"

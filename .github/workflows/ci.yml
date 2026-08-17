@@ -18,6 +18,9 @@ jobs:
       - name: Install tools
         run: mise install
 
+      - name: Install rustfmt
+        run: mise exec -- rustup component add rustfmt
+
       - name: Format
         run: mise run fmt -- --check
 
@@ -35,11 +38,11 @@ jobs:
       - name: Install tools
         run: mise install
 
+      - name: Install rustfmt
+        run: mise exec -- rustup component add rustfmt
+
       - name: Run tests with visual report
-        run: |
-          set -o pipefail
-          mise run test 2>&1 | tee test-output.log
-          ./scripts/visual-test-report.sh test-output.log
+        run: mise run test
 
       - name: Upload test report
         if: always()
