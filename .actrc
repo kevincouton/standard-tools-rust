@@ -1,0 +1,5 @@
+--container-daemon-socket /Users/kevincouton/.local/share/containers/podman/machine/podman.sock
+# Use the host architecture for local act runs. GitHub Actions runners are amd64,
+# but arm64 emulation on Apple Silicon is impractically slow for local validation.
+--container-architecture linux/arm64
+-P ubuntu-latest=ghcr.io/catthehacker/ubuntu:act-latest
