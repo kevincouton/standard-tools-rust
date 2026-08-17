@@ -56,3 +56,25 @@ fn constant_time_eq(a: &str, b: &str) -> bool {
     use subtle::ConstantTimeEq;
     a.as_bytes().ct_eq(b.as_bytes()).into()
 }
+
+/// Tonic interceptor that validates the `x-api-key` metadata.
+#[allow(clippy::result_large_err)]
+pub fn grpc_api_key_interceptor(
+    config: AuthConfig,
+) -> impl Fn(tonic::Request<()>) -> std::result::Result<tonic::Request<()>, tonic::Status> + Clone {
+    move |req: tonic::Request<()>| {
+        if !config.enabled {
+            return Ok(req);
+        }
+
+        let provided = req
+            .metadata()
+            .get("x-api-key")
+            .and_then(|v| v.to_str().ok());
+
+        match (config.api_key.as_ref(), provided) {
+            (Some(expected), Some(got)) if constant_time_eq(expected, got) => Ok(req),
+            _ => Err(tonic::Status::unauthenticated("missing or invalid api key")),
+        }
+    }
+}

@@ -66,6 +66,7 @@ pub async fn run(cli: Cli) -> anyhow::Result<()> {
             grpc_port,
         } => {
             let config = crate::config::ServerConfig::from_env();
+            config.validate()?;
             crate::server::serve(build_state().await, config, http_port, grpc_port).await?;
         }
         Commands::Audit { command } => match command {

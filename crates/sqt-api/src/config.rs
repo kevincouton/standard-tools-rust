@@ -18,12 +18,21 @@ impl ServerConfig {
     /// Recognised variables:
     ///
     /// * `SQT_API_KEY` – the shared API key.
-    /// * `SQT_AUTH_ENABLED` – `true`/`1`/`yes` to require the API key (default `false`).
+    /// * `SQT_AUTH_ENABLED` – `true`/`1`/`yes` to require the API key (default `true`).
     pub fn from_env() -> Self {
         Self {
             api_key: std::env::var("SQT_API_KEY").ok(),
-            auth_enabled: parse_bool_env("SQT_AUTH_ENABLED").unwrap_or(false),
+            auth_enabled: parse_bool_env("SQT_AUTH_ENABLED").unwrap_or(true),
         }
+    }
+
+    /// Validates the configuration, returning an error when auth is enabled
+    /// without an API key.
+    pub fn validate(&self) -> anyhow::Result<()> {
+        if self.auth_enabled && self.api_key.as_deref().is_none_or(str::is_empty) {
+            anyhow::bail!("SQT_AUTH_ENABLED is true but SQT_API_KEY is not set");
+        }
+        Ok(())
     }
 }
 

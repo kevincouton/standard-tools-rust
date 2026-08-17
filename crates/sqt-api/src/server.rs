@@ -28,6 +28,7 @@ pub async fn serve<S: AuditStorage + 'static>(
     grpc_port: u16,
 ) -> anyhow::Result<()> {
     let http_state = state.clone();
+    let http_config = config.clone();
     let http_task = tokio::spawn(async move {
         let mut app = Router::new()
             .merge(rest::router(http_state.clone()))
@@ -35,11 +36,11 @@ pub async fn serve<S: AuditStorage + 'static>(
             .merge(mcp::router(http_state))
             .layer(TraceLayer::new_for_http());
 
-        if config.auth_enabled {
+        if http_config.auth_enabled {
             app = app.layer(middleware::from_fn_with_state(
                 AuthConfig {
-                    api_key: config.api_key.clone(),
-                    enabled: config.auth_enabled,
+                    api_key: http_config.api_key.clone(),
+                    enabled: http_config.auth_enabled,
                 },
                 api_key_middleware,
             ));
@@ -58,11 +59,25 @@ pub async fn serve<S: AuditStorage + 'static>(
 
         let addr: SocketAddr = ([0, 0, 0, 0], grpc_port).into();
         info!("gRPC server listening on {addr}");
-        Server::builder()
-            .add_service(HealthServer::new(health))
-            .add_service(AgentServer::new(agent))
-            .serve(addr)
-            .await?;
+
+        let mut builder = Server::builder();
+        if config.auth_enabled {
+            let interceptor = crate::auth::grpc_api_key_interceptor(AuthConfig {
+                api_key: config.api_key.clone(),
+                enabled: config.auth_enabled,
+            });
+            builder
+                .add_service(HealthServer::with_interceptor(health, interceptor.clone()))
+                .add_service(AgentServer::with_interceptor(agent, interceptor))
+                .serve(addr)
+                .await?;
+        } else {
+            builder
+                .add_service(HealthServer::new(health))
+                .add_service(AgentServer::new(agent))
+                .serve(addr)
+                .await?;
+        }
         Ok::<(), anyhow::Error>(())
     });
 
