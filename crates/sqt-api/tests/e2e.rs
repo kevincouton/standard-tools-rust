@@ -20,6 +20,7 @@ use tower::ServiceExt;
 use axum::Router;
 use sqt_api::services::build_dispatcher;
 use sqt_api::state::AppState;
+use sqt_orders::InMemoryOrderRepository;
 
 /// Deterministic market-data provider that returns a synthetic upward-trending
 /// series for any ticker.
@@ -69,11 +70,13 @@ fn test_state() -> Arc<AppState<InMemoryStorage>> {
     let dispatcher = Arc::new(build_dispatcher(market_data.clone()));
     let audit_storage = Arc::new(InMemoryStorage::new());
     let audit_writer = Arc::new(AuditWriter::new(audit_storage));
+    let order_repo: Arc<dyn sqt_orders::OrderRepository> = Arc::new(InMemoryOrderRepository::new());
 
     Arc::new(AppState {
         dispatcher,
         audit_writer,
         market_data,
+        order_repo,
     })
 }
 
@@ -209,4 +212,75 @@ async fn market_data_endpoint_returns_bars() {
     assert_eq!(status, StatusCode::OK);
     let bars = body.as_array().expect("bars array");
     assert_eq!(bars.len(), 5);
+}
+
+#[tokio::test]
+async fn orders_persist_across_requests() {
+    let state = test_state();
+
+    let (status, body) = send_json(
+        state.clone(),
+        "POST",
+        "/api/v1/orders",
+        json!({
+            "ticker": "AAPL",
+            "side": "buy",
+            "order_type": "limit",
+            "quantity": 100.0,
+            "price": 150.0
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED);
+    let id = body["id"].as_str().expect("order id");
+
+    let (status, body) = send_json(
+        state.clone(),
+        "GET",
+        &format!("/api/v1/orders/{id}"),
+        json!({}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["status"], "created");
+
+    let (status, body) = send_json(
+        state.clone(),
+        "POST",
+        &format!("/api/v1/orders/{id}"),
+        json!({"action": "submit"}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["status"], "submitted");
+
+    let (status, body) = send_json(
+        state.clone(),
+        "GET",
+        "/api/v1/orders",
+        json!({}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::OK);
+    let orders = body.as_array().expect("orders array");
+    assert_eq!(orders.len(), 1);
+    assert_eq!(orders[0]["status"], "submitted");
+
+    let (status, _) = send_json(
+        state.clone(),
+        "DELETE",
+        &format!("/api/v1/orders/{id}"),
+        json!({}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+
+    let (status, _) = send_json(
+        state,
+        "GET",
+        &format!("/api/v1/orders/{id}"),
+        json!({}),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }

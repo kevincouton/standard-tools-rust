@@ -383,49 +383,52 @@ struct CreateOrderRequest {
 }
 
 async fn create_order<S: AuditStorage>(
-    State(_state): State<Arc<AppState<S>>>,
+    State(state): State<Arc<AppState<S>>>,
     Json(req): Json<CreateOrderRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let side = parse_order_side(&req.side)?;
     let order_type = parse_order_type(&req.order_type)?;
     let quantity = Decimal::from_f64(req.quantity)
         .ok_or_else(|| QuantError::InvalidCommand("invalid quantity".into()))?;
-    let price = req
-        .price
-        .and_then(Decimal::from_f64)
-        .ok_or_else(|| QuantError::InvalidCommand("invalid price".into()));
+    if quantity <= Decimal::ZERO {
+        return Err(QuantError::InvalidCommand("quantity must be positive".into()).into());
+    }
+    let price = match req.price {
+        Some(value) => Some(
+            Decimal::from_f64(value)
+                .ok_or_else(|| QuantError::InvalidCommand("invalid price".into()))?,
+        ),
+        None => None,
+    };
 
-    let repo = Arc::new(sqt_orders::InMemoryOrderRepository::new());
-    let service = OrderService::new(repo);
+    let service = OrderService::new(state.order_repo.clone());
     let order = service
-        .create_order(req.ticker, side, order_type, quantity, price.ok())
+        .create_order(req.ticker, side, order_type, quantity, price)
         .await?;
     Ok((
         StatusCode::CREATED,
-        Json(serde_json::to_value(order).unwrap_or(Value::Null)),
+        Json(serde_json::to_value(order).map_err(|e| QuantError::Internal(e.into()))?),
     ))
 }
 
 async fn list_orders<S: AuditStorage>(
-    State(_state): State<Arc<AppState<S>>>,
+    State(state): State<Arc<AppState<S>>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let repo = Arc::new(sqt_orders::InMemoryOrderRepository::new());
-    let service = OrderService::new(repo);
+    let service = OrderService::new(state.order_repo.clone());
     let orders = service.list_orders().await?;
-    Ok(Json(serde_json::to_value(orders).unwrap_or(Value::Null)))
+    Ok(Json(serde_json::to_value(orders).map_err(|e| QuantError::Internal(e.into()))?))
 }
 
 async fn get_order<S: AuditStorage>(
-    State(_state): State<Arc<AppState<S>>>,
+    State(state): State<Arc<AppState<S>>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<impl IntoResponse, AppError> {
-    let repo = Arc::new(sqt_orders::InMemoryOrderRepository::new());
-    let service = OrderService::new(repo);
+    let service = OrderService::new(state.order_repo.clone());
     let order = service
         .get_order(id)
         .await?
         .ok_or_else(|| QuantError::NotFound(format!("order {id} not found")))?;
-    Ok(Json(serde_json::to_value(order).unwrap_or(Value::Null)))
+    Ok(Json(serde_json::to_value(order).map_err(|e| QuantError::Internal(e.into()))?))
 }
 
 #[derive(Debug, Deserialize)]
@@ -434,12 +437,11 @@ struct TransitionRequest {
 }
 
 async fn transition_order<S: AuditStorage>(
-    State(_state): State<Arc<AppState<S>>>,
+    State(state): State<Arc<AppState<S>>>,
     Path(id): Path<uuid::Uuid>,
     Json(req): Json<TransitionRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    let repo = Arc::new(sqt_orders::InMemoryOrderRepository::new());
-    let service = OrderService::new(repo);
+    let service = OrderService::new(state.order_repo.clone());
     let order = match req.action.as_str() {
         "submit" => service.submit_order(id).await?,
         "fill" => service.fill_order(id).await?,
@@ -448,20 +450,19 @@ async fn transition_order<S: AuditStorage>(
             return Err(QuantError::InvalidCommand(format!("unknown action {}", req.action)).into())
         }
     };
-    Ok(Json(serde_json::to_value(order).unwrap_or(Value::Null)))
+    Ok(Json(serde_json::to_value(order).map_err(|e| QuantError::Internal(e.into()))?))
 }
 
 async fn delete_order<S: AuditStorage>(
-    State(_state): State<Arc<AppState<S>>>,
+    State(state): State<Arc<AppState<S>>>,
     Path(id): Path<uuid::Uuid>,
 ) -> Result<StatusCode, AppError> {
-    let repo = Arc::new(sqt_orders::InMemoryOrderRepository::new());
-    let service = OrderService::new(repo);
+    let service = OrderService::new(state.order_repo.clone());
     service
         .get_order(id)
         .await?
         .ok_or_else(|| QuantError::NotFound(format!("order {id} not found")))?;
-    service.get_order(id).await?; // placeholder; repository doesn't expose delete on service
+    service.delete_order(id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

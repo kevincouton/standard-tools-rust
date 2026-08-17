@@ -10,11 +10,11 @@ use crate::repository::OrderRepository;
 
 /// Application service for order management.
 #[derive(Clone)]
-pub struct OrderService<R: OrderRepository> {
+pub struct OrderService<R: OrderRepository + ?Sized> {
     repo: Arc<R>,
 }
 
-impl<R: OrderRepository> OrderService<R> {
+impl<R: OrderRepository + ?Sized> OrderService<R> {
     /// Creates a service backed by the supplied repository.
     pub fn new(repo: Arc<R>) -> Self {
         Self { repo }
@@ -90,5 +90,10 @@ impl<R: OrderRepository> OrderService<R> {
     pub async fn orders_by_status(&self, status: OrderStatus) -> crate::Result<Vec<Order>> {
         let orders = self.repo.list().await?;
         Ok(orders.into_iter().filter(|o| o.status == status).collect())
+    }
+
+    /// Deletes an order by id.
+    pub async fn delete_order(&self, id: Uuid) -> crate::Result<()> {
+        self.repo.delete(id).await
     }
 }

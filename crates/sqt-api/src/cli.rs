@@ -44,16 +44,18 @@ pub enum AuditCommands {
     Replay,
 }
 
-fn build_state() -> Arc<AppState<InMemoryStorage>> {
+async fn build_state() -> Arc<AppState<InMemoryStorage>> {
     let market_data = build_market_data_service();
     let dispatcher = Arc::new(build_dispatcher(market_data.clone()));
     let audit_storage = Arc::new(InMemoryStorage::new());
     let audit_writer = Arc::new(sqt_audit::AuditWriter::new(audit_storage.clone()));
+    let order_repo = crate::services::build_order_repository().await;
 
     Arc::new(AppState {
         dispatcher,
         audit_writer,
         market_data,
+        order_repo,
     })
 }
 
@@ -63,11 +65,12 @@ pub async fn run(cli: Cli) -> anyhow::Result<()> {
             http_port,
             grpc_port,
         } => {
-            crate::server::serve(build_state(), http_port, grpc_port).await?;
+            let config = crate::config::ServerConfig::from_env();
+            crate::server::serve(build_state().await, config, http_port, grpc_port).await?;
         }
         Commands::Audit { command } => match command {
             AuditCommands::Verify => {
-                let state = build_state();
+                let state = build_state().await;
                 let verifier = AuditVerifier::new(state.audit_writer.storage());
                 let result = verifier.verify().await?;
                 println!("{result:?}");

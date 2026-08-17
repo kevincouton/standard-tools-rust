@@ -4,7 +4,9 @@ use clap::Parser;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod a2a;
+mod auth;
 mod cli;
+mod config;
 mod grpc;
 mod mcp;
 mod rest;
