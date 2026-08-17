@@ -18,8 +18,10 @@ jobs:
       - name: Install tools
         run: mise install
 
-      - name: Install rustfmt
-        run: mise exec -- rustup component add rustfmt
+      - name: Install rustfmt and clippy
+        run: |
+          mise exec -- rustup component add rustfmt
+          mise exec -- rustup component add clippy
 
       - name: Format
         run: mise run fmt -- --check
