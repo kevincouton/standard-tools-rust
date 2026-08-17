@@ -31,6 +31,10 @@ use sqt_screener::{
 use crate::registry;
 use crate::tool::{ToolCall, ToolResult};
 
+/// Upper bound on Monte Carlo paths to keep a single request from
+/// monopolising the process.
+const MAX_MONTE_CARLO_SIMULATIONS: usize = 10_000;
+
 /// Dispatches agent tool calls to domain services.
 ///
 /// The dispatcher is generic over the fundamental-data provider used by the
@@ -578,7 +582,7 @@ impl<P: FundamentalProvider> ToolDispatcher<P> {
         let simulations = args
             .get("simulations")
             .and_then(Value::as_u64)
-            .map(|v| v as usize);
+            .map(|v| (v as usize).clamp(1, MAX_MONTE_CARLO_SIMULATIONS));
         let seed = args.get("seed").and_then(Value::as_u64);
         let result = self.backtest.run_monte_carlo(
             strategy_name,
