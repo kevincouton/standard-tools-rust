@@ -416,7 +416,9 @@ async fn list_orders<S: AuditStorage>(
 ) -> Result<impl IntoResponse, AppError> {
     let service = OrderService::new(state.order_repo.clone());
     let orders = service.list_orders().await?;
-    Ok(Json(serde_json::to_value(orders).map_err(|e| QuantError::Internal(e.into()))?))
+    Ok(Json(
+        serde_json::to_value(orders).map_err(|e| QuantError::Internal(e.into()))?,
+    ))
 }
 
 async fn get_order<S: AuditStorage>(
@@ -428,7 +430,9 @@ async fn get_order<S: AuditStorage>(
         .get_order(id)
         .await?
         .ok_or_else(|| QuantError::NotFound(format!("order {id} not found")))?;
-    Ok(Json(serde_json::to_value(order).map_err(|e| QuantError::Internal(e.into()))?))
+    Ok(Json(
+        serde_json::to_value(order).map_err(|e| QuantError::Internal(e.into()))?,
+    ))
 }
 
 #[derive(Debug, Deserialize)]
@@ -450,7 +454,9 @@ async fn transition_order<S: AuditStorage>(
             return Err(QuantError::InvalidCommand(format!("unknown action {}", req.action)).into())
         }
     };
-    Ok(Json(serde_json::to_value(order).map_err(|e| QuantError::Internal(e.into()))?))
+    Ok(Json(
+        serde_json::to_value(order).map_err(|e| QuantError::Internal(e.into()))?,
+    ))
 }
 
 async fn delete_order<S: AuditStorage>(

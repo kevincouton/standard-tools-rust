@@ -5,10 +5,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     protobuf-compiler \
     libssl-dev \
     pkg-config \
+    gfortran \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY Cargo.toml Cargo.lock .cargo ./
+COPY Cargo.toml Cargo.lock ./
 COPY crates ./crates
 COPY proto ./proto
 

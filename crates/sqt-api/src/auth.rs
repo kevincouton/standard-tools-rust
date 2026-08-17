@@ -37,10 +37,7 @@ pub async fn api_key_middleware(
         return next.run(req).await;
     }
 
-    let provided = req
-        .headers()
-        .get("x-api-key")
-        .and_then(|v| v.to_str().ok());
+    let provided = req.headers().get("x-api-key").and_then(|v| v.to_str().ok());
 
     match (config.api_key.as_ref(), provided) {
         (Some(expected), Some(got)) if constant_time_eq(expected, got) => next.run(req).await,

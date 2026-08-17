@@ -254,13 +254,7 @@ async fn orders_persist_across_requests() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["status"], "submitted");
 
-    let (status, body) = send_json(
-        state.clone(),
-        "GET",
-        "/api/v1/orders",
-        json!({}),
-    )
-    .await;
+    let (status, body) = send_json(state.clone(), "GET", "/api/v1/orders", json!({})).await;
     assert_eq!(status, StatusCode::OK);
     let orders = body.as_array().expect("orders array");
     assert_eq!(orders.len(), 1);
@@ -275,12 +269,6 @@ async fn orders_persist_across_requests() {
     .await;
     assert_eq!(status, StatusCode::NO_CONTENT);
 
-    let (status, _) = send_json(
-        state,
-        "GET",
-        &format!("/api/v1/orders/{id}"),
-        json!({}),
-    )
-    .await;
+    let (status, _) = send_json(state, "GET", &format!("/api/v1/orders/{id}"), json!({})).await;
     assert_eq!(status, StatusCode::NOT_FOUND);
 }

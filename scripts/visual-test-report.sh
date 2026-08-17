@@ -51,3 +51,7 @@ cat > "$REPORT" <<EOF
 EOF
 
 echo "Report written to $REPORT"
+
+if [ "$FAILED" -gt 0 ]; then
+  exit 1
+fi

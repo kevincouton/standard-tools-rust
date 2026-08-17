@@ -37,6 +37,7 @@ jobs:
 
       - name: Run tests with visual report
         run: |
+          set -o pipefail
           mise run test 2>&1 | tee test-output.log
           ./scripts/visual-test-report.sh test-output.log
 
