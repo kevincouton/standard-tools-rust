@@ -13,6 +13,6 @@ We will acknowledge receipt within 48 hours and aim to provide a fix or mitigati
 ## Security Practices
 
 - Secrets and credentials are loaded from environment variables, never committed to source.
-- Production images run as non-root users.
-- TLS and authentication are enabled by default in production deployments.
-- Dependencies are kept up to date and scanned in CI.
+- API-key authentication is supported via `SQT_API_KEY` and enabled by default (`SQT_AUTH_ENABLED=true`).
+
+> **Note:** TLS termination and container hardening are not yet implemented in this repository. Deploy behind a reverse proxy that provides TLS. Dependency scanning is not yet wired into CI.

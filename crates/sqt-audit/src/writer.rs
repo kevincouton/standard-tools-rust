@@ -17,12 +17,16 @@ use crate::storage::AuditStorage;
 #[derive(Clone)]
 pub struct AuditWriter<S: AuditStorage> {
     storage: Arc<S>,
+    lock: Arc<tokio::sync::Mutex<()>>,
 }
 
 impl<S: AuditStorage> AuditWriter<S> {
     /// Creates a writer backed by the supplied storage.
     pub fn new(storage: Arc<S>) -> Self {
-        Self { storage }
+        Self {
+            storage,
+            lock: Arc::new(tokio::sync::Mutex::new(())),
+        }
     }
 
     /// Returns a clone of the underlying storage handle.
@@ -43,6 +47,8 @@ impl<S: AuditStorage> AuditWriter<S> {
         status: impl Into<String>,
         error_message: Option<String>,
     ) -> crate::Result<AuditRecord> {
+        let _guard = self.lock.lock().await;
+
         let tool_name = tool_name.into();
         let status = status.into();
         let output_hash = output.map(crate::hash::hash_payload);

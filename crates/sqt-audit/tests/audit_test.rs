@@ -162,3 +162,79 @@ async fn genesis_hash_is_used_for_empty_storage() {
     let last = storage.last_hash().await.expect("last_hash succeeds");
     assert_eq!(last, sqt_audit::GENESIS_HASH);
 }
+
+#[tokio::test]
+async fn writer_concurrent_writes_maintain_chain_integrity() {
+    let inner = build_storage();
+    let storage = Arc::new(YieldingStorage {
+        inner: inner.clone(),
+    });
+    let writer = AuditWriter::new(storage);
+
+    const N: usize = 100;
+    let mut handles = Vec::new();
+    for i in 0..N {
+        let writer = writer.clone();
+        handles.push(tokio::spawn(async move {
+            writer
+                .record_ok(
+                    Uuid::new_v4(),
+                    format!("tool_{i}"),
+                    json!({"i": i}),
+                    &json!({"ok": true}),
+                )
+                .await
+                .expect("record succeeds")
+        }));
+    }
+    for h in handles {
+        h.await.expect("task joins");
+    }
+
+    let verifier = AuditVerifier::new(inner.clone());
+    let result = verifier.verify().await.expect("verify runs");
+    assert_eq!(result, VerificationResult::Ok);
+
+    let records = inner.list().await.expect("list succeeds");
+    assert_eq!(records.len(), N);
+    let mut prev_counts = std::collections::HashMap::new();
+    for r in &records {
+        if r.prev_record_hash != sqt_audit::GENESIS_HASH {
+            *prev_counts.entry(r.prev_record_hash.clone()).or_insert(0) += 1;
+        }
+    }
+    for count in prev_counts.values() {
+        assert_eq!(
+            *count, 1,
+            "each non-genesis prev hash should appear exactly once"
+        );
+    }
+}
+
+#[derive(Clone)]
+struct YieldingStorage {
+    inner: Arc<InMemoryStorage>,
+}
+
+#[async_trait::async_trait]
+impl AuditStorage for YieldingStorage {
+    async fn last_hash(&self) -> sqt_core::Result<String> {
+        tokio::task::yield_now().await;
+        self.inner.last_hash().await
+    }
+
+    async fn append(&self, record: &AuditRecord) -> sqt_core::Result<()> {
+        tokio::task::yield_now().await;
+        self.inner.append(record).await
+    }
+
+    async fn list(&self) -> sqt_core::Result<Vec<AuditRecord>> {
+        tokio::task::yield_now().await;
+        self.inner.list().await
+    }
+
+    async fn len(&self) -> sqt_core::Result<usize> {
+        tokio::task::yield_now().await;
+        self.inner.len().await
+    }
+}
