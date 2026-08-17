@@ -35,7 +35,7 @@ This document compares the `standard-tools-rust` port against the other Standard
 | Monte Carlo simulation | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Robustness / stress testing | ✅ | ❌ | ✅ | ❌ | ❌ |
 | Portfolio mean-variance | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Portfolio risk parity | ⚠️ inverse-vol | ⚠️ inverse-vol | ✅ equal-risk-contribution | ⚠️ inverse-vol | ✅ equal-risk-contribution |
+| Portfolio risk parity | ✅ equal-risk-contribution | ⚠️ inverse-vol | ✅ equal-risk-contribution | ✅ equal-risk-contribution | ✅ equal-risk-contribution |
 | Black-Litterman | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Screener | ⚠️ hardcoded provider | ⚠️ hardcoded provider | ⚠️ hardcoded provider | ⚠️ hardcoded provider | ⚠️ hardcoded provider |
 | Hash-chained audit | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -71,7 +71,7 @@ This document compares the `standard-tools-rust` port against the other Standard
 
 | Port | Status | Notes |
 |---|---|---|
-| Rust | ❌ red | `cargo fmt` not installed in mise toolchain; `set -o pipefail` fails under dash |
+| Rust | ⚠️ config fixed | CI config was red for `cargo fmt` / `pipefail`; those causes are fixed locally. Pending act/upstream run for final confirmation |
 | C# | ✅ green | `dotnet test` passes (88 tests) |
 | Kotlin | ✅ green | unit / integration / e2e green; native build not validated locally |
 | Go | ✅ green | `go test ./...` and image builds green locally |
@@ -79,16 +79,12 @@ This document compares the `standard-tools-rust` port against the other Standard
 
 ## Known limitations relevant to this port
 
-- CI is red on `main` because the mise-installed toolchain lacks `cargo fmt` and the test task uses `set -o pipefail` under `/bin/sh`.
 - Audit records do not capture git commit, package version, or random seed.
 - A2A `tasks/get` and `tasks/cancel` are placeholders.
-- PCA and risk-parity implementations are stubs (variance-ranking and inverse-volatility respectively).
 - No container `HEALTHCHECK`; the classic image runs as root.
 
 ## Recommendations before a release tag
 
-1. Fix CI: install `rustfmt` in the mise toolchain and make the test script POSIX-compatible.
-2. Add audit provenance fields (git commit, version, random seed).
-3. Complete A2A get/cancel or remove the placeholder endpoints.
-4. Replace PCA/risk-parity stubs with real algorithms or rename the functions.
-5. Add `HEALTHCHECK` and migrate the classic image to a non-root base.
+1. Add audit provenance fields (git commit, version, random seed).
+2. Complete A2A get/cancel or remove the placeholder endpoints.
+3. Add `HEALTHCHECK` and migrate the classic image to a non-root base.
