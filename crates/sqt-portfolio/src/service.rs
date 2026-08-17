@@ -42,8 +42,8 @@ impl PortfolioService {
         mean_variance_optimize(&matrix, &labels, risk_free_rate, target_return)
     }
 
-    /// Computes inverse-volatility risk-parity weights on the supplied returns
-    /// map.
+    /// Computes equal-risk-contribution risk-parity weights on the supplied
+    /// returns map.
     ///
     /// # Errors
     ///

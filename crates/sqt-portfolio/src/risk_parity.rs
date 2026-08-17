@@ -1,17 +1,19 @@
 //! Risk-parity portfolio construction.
 //!
-//! This module implements a simple **inverse-volatility** risk-parity rule. The
-//! weight of each asset is proportional to the inverse of its sample volatility:
+//! This module implements an **equal-risk-contribution** risk-parity rule via a
+//! damped fixed-point iteration on asset risk contributions:
 //!
 //! ```text
-//! w_i = (1 / sigma_i) / sum_j(1 / sigma_j)
+//! rc_i = w_i * (cov * w)_i
+//! w_i  <- w_i + damping * (w_i * target / rc_i - w_i)
+//! target = sum(rc) / n
 //! ```
 //!
-//! Assets with lower volatility receive larger weights so that each asset
-//! contributes roughly equally to the portfolio's total volatility budget. This
-//! is a one-pass heuristic; more sophisticated iterative risk-budgeting can be
-//! layered on top later if needed.
+//! The algorithm is the same one used in the C++ and Go ports and converges to
+//! a portfolio where each asset contributes roughly the same amount of total
+//! volatility.
 
+use ndarray::{Array1, Array2};
 use serde::{Deserialize, Serialize};
 use sqt_core::{QuantError, Result};
 use std::collections::HashMap;
@@ -28,7 +30,7 @@ pub struct RiskParityResult {
     pub weights: HashMap<String, f64>,
 }
 
-/// Computes inverse-volatility risk-parity weights from a returns matrix.
+/// Computes equal-risk-contribution risk-parity weights from a returns matrix.
 ///
 /// `returns_matrix[i]` is the return series for asset `labels[i]`. All series
 /// must have the same length and contain at least two observations.
@@ -44,27 +46,60 @@ pub fn optimize(returns_matrix: &[Vec<f64>], labels: &[String]) -> Result<RiskPa
     let n = returns_matrix.len();
     let obs = returns_matrix[0].len();
 
-    let mut inv_vols = Vec::with_capacity(n);
-    for series in returns_matrix {
-        let mean = series.iter().sum::<f64>() / obs as f64;
-        let variance = series.iter().map(|&r| (r - mean).powi(2)).sum::<f64>() / (obs as f64 - 1.0);
-        let vol = variance.max(0.0).sqrt();
-        inv_vols.push(if vol > DEGENERACY_EPS { 1.0 / vol } else { 0.0 });
-    }
+    let means = Array1::from_vec(
+        returns_matrix
+            .iter()
+            .map(|s| s.iter().sum::<f64>() / obs as f64)
+            .collect(),
+    );
 
-    let total = inv_vols.iter().sum::<f64>();
-    if total < DEGENERACY_EPS {
+    let data = Array2::from_shape_fn((n, obs), |(i, t)| returns_matrix[i][t] - means[i]);
+    let cov = data.dot(&data.t()) / (obs as f64 - 1.0);
+
+    let total_variance: f64 = (0..n).map(|i| cov[[i, i]]).sum();
+    if total_variance < DEGENERACY_EPS {
         return Err(QuantError::DataQuality(
             "all assets have zero volatility; cannot compute risk-parity weights".to_string(),
         ));
     }
 
-    let mut weights = HashMap::with_capacity(n);
-    for (i, label) in labels.iter().enumerate() {
-        weights.insert(label.clone(), inv_vols[i] / total);
+    let mut weights = Array1::from_elem(n, 1.0 / n as f64);
+
+    const MAX_ITERATIONS: usize = 1000;
+    const CONVERGENCE_TOL: f64 = 1e-10;
+    const DAMPING: f64 = 0.5;
+
+    for _ in 0..MAX_ITERATIONS {
+        let mrc = cov.dot(&weights);
+        let rc: Array1<f64> = &weights * &mrc;
+        let total_rc: f64 = rc.sum();
+        if total_rc < DEGENERACY_EPS {
+            break;
+        }
+        let target = total_rc / n as f64;
+
+        if rc.iter().all(|&r| (r - target).abs() < CONVERGENCE_TOL) {
+            break;
+        }
+
+        let next: Array1<f64> = weights
+            .iter()
+            .zip(rc.iter())
+            .map(|(&w, &r)| w + DAMPING * (w * target / r.max(DEGENERACY_EPS) - w))
+            .collect();
+        let next_total: f64 = next.sum();
+        if next_total < DEGENERACY_EPS {
+            break;
+        }
+        weights = &next / next_total;
     }
 
-    Ok(RiskParityResult { weights })
+    let mut weights_map = HashMap::with_capacity(n);
+    for (i, label) in labels.iter().enumerate() {
+        weights_map.insert(label.clone(), weights[i]);
+    }
+
+    Ok(RiskParityResult { weights: weights_map })
 }
 
 fn validate(returns_matrix: &[Vec<f64>], labels: &[String]) -> Result<()> {

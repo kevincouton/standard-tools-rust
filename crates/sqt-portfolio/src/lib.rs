@@ -9,7 +9,7 @@
 //!
 //! * [`mean_variance`] — mean-variance optimization via a two-fund separation
 //!   heuristic (minimum-variance + maximum-Sharpe portfolios).
-//! * [`risk_parity`] — inverse-volatility risk parity.
+//! * [`risk_parity`] — equal-risk-contribution risk parity.
 //! * [`black_litterman`] — Black-Litterman model with explicit view matrices or
 //!   a simplified expert-view interface.
 
