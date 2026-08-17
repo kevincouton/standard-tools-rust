@@ -29,7 +29,7 @@ This document compares the `standard-tools-rust` port against the other Standard
 | Market data provider port | ✅ YF + Moka cache | ⚠️ interface / stub | ✅ YF, Polygon, Bloomberg stub | ✅ synthetic, YF, Polygon | ⚠️ synthetic only |
 | Indicators | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Risk / return metrics | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Analysis (regression, cointegration, Hurst, PCA, correlation, options) | ⚠️ no multi-factor | ✅ library; ⚠️ only regression + options exposed | ✅ | ⚠️ no multi-factor | ⚠️ no multi-factor |
+| Analysis (regression, cointegration, Hurst, PCA, correlation, options) | ✅ | ✅ library; ⚠️ only regression + options exposed | ✅ | ⚠️ no multi-factor | ⚠️ no multi-factor |
 | Backtesting engine | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Walk-forward optimization | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Monte Carlo simulation | ✅ | ✅ | ✅ | ✅ | ✅ |
