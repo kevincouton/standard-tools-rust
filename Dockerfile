@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM rust:1.82-slim-bookworm AS builder
+FROM rust:1.97.1-slim-bookworm AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     protobuf-compiler \
