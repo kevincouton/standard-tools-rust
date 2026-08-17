@@ -69,19 +69,32 @@ This document compares the `standard-tools-rust` port against the other Standard
 
 ## CI status
 
+Validation below was performed locally with `nektos/act` on `linux/arm64` (Podman) using the workflow job(s) that exercise the core build and tests.
+
 | Port | Status | Notes |
 |---|---|---|
-| Rust | ⚠️ config fixed | CI config was red for `cargo fmt` / `pipefail`; those causes are fixed locally. Pending act/upstream run for final confirmation |
-| C# | ✅ green | `dotnet test` passes (88 tests) |
-| Kotlin | ✅ green | unit / integration / e2e green; native build not validated locally |
-| Go | ✅ green | `go test ./...` and image builds green locally |
-| C++ | ❌ red | `rm -rf /var/lib/apt/lists/*` lacks permissions in GitHub Actions runner |
+| Rust | ⚠️ pending | `quality` job passes; `test` job fixed to skip artifact upload under `env.ACT` and is re-running |
+| C# | ✅ green | `act push --job build-and-test` passes |
+| Kotlin | ✅ green | `act push --job unit-tests` passes; native build not validated locally |
+| Go | ✅ green | `act push --job quality` passes |
+| C++ | ⚠️ pending | `quality` job is running |
 
 ## Known limitations relevant to this port
 
 - Audit records do not capture git commit, package version, or random seed.
 - A2A `tasks/get` and `tasks/cancel` are placeholders.
 - No container `HEALTHCHECK`; the classic image runs as root.
+
+## Outstanding P0/P1 gaps (deferred)
+
+The following items were identified in the staff-engine audit and are explicitly documented rather than hidden behind false claims:
+
+1. **TLS termination** — not implemented in any port. Deploy behind a reverse proxy that terminates TLS.
+2. **Structured logging / request tracing** — `tracing` is used internally but request IDs are not propagated to HTTP/gRPC responses and logs are not uniformly structured.
+3. **Full A2A/MCP semantics** — A2A `tasks/get` and `tasks/cancel` are placeholders; MCP is HTTP-only and lacks full protocol compliance.
+4. **Audit provenance** — audit records do not capture git commit, package version, or per-request random seed.
+5. **Container hardening** — the classic `Dockerfile` runs as root and has no `HEALTHCHECK`.
+6. **Dependency scanning** — add `cargo-deny` / `cargo-audit` or Dependabot to CI.
 
 ## Recommendations before a release tag
 
