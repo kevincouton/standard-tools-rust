@@ -50,7 +50,7 @@ This document compares the `standard-tools-rust` port against the other Standard
 | TLS termination | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Audit provenance (git commit / version / seed) | ❌ none recorded | ⚠️ schema only | ⚠️ commit + version | ✅ all three | ✅ all three |
 | Replay read-only / side-effect blocklist | ⚠️ blocklist, CLI placeholder | ❌ not implemented | ✅ blocklist | ❌ re-executes | ⚠️ read-only fetch, no re-execution |
-| Persistent audit storage | ✅ PostgreSQL + memory | ❌ in-memory only | ✅ PostgreSQL | ✅ PostgreSQL + memory | ✅ PostgreSQL + memory |
+| Persistent audit storage | ✅ PostgreSQL + memory | ✅ SQLite + memory | ✅ PostgreSQL | ✅ PostgreSQL + memory | ✅ PostgreSQL + memory |
 
 ## Operational hardening
 
@@ -73,11 +73,11 @@ Validation below was performed locally with `nektos/act` on `linux/arm64` (Podma
 
 | Port | Status | Notes |
 |---|---|---|
-| Rust | ⚠️ pending | `quality` job passes; `test` job fixed to skip artifact upload under `env.ACT` and is re-running |
+| Rust | ✅ green | `act push --job test` passes; artifact upload skipped under `env.ACT` |
 | C# | ✅ green | `act push --job build-and-test` passes |
 | Kotlin | ✅ green | `act push --job unit-tests` passes; native build not validated locally |
 | Go | ✅ green | `act push --job quality` passes |
-| C++ | ⚠️ pending | `quality` job is running |
+| C++ | ✅ green | `act push --job quality` passes (build + ctest)
 
 ## Known limitations relevant to this port
 
